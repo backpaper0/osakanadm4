@@ -21,22 +21,22 @@ class Photo extends React.Component {
         <div style={{ padding: "0 5px" }}>{title}</div>
         <div style={{ padding: "0 5px" }}>
           <button style={{ cursor: "pointer", border: 0, fontSize: "large",
-							backgroundColor: "transparent", color: fav === 0 ? "gray" : "PaleVioletRed" }}
-						onClick={this.addFav.bind(this)}>{fav === 0 ? "☆" : "★" }</button>
-			    <span>
-						いいね！
-						<span>{fav}</span>
-						件
-					</span>
+              backgroundColor: "transparent", color: fav === 0 ? "gray" : "PaleVioletRed" }}
+            onClick={this.addFav.bind(this)}>{fav === 0 ? "☆" : "★" }</button>
+          <span>
+            いいね！
+            <span>{fav}</span>
+            件
+          </span>
         </div>
       </div>
     );
   }
 
-	addFav() {
-		const { fav } = this.state;
-		this.setState({ fav: fav + 1 });
-	}
+  addFav() {
+    const { fav } = this.state;
+    this.setState({ fav: fav + 1 });
+  }
 }
 
 class App extends React.Component {
@@ -58,15 +58,15 @@ class App extends React.Component {
   render() {
     const { photos } = this.state;
     return (
-			<div>
-				<header style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "40px",
-						borderBottom: "1px solid silver", boxSizing: "border-box", display: "flex",
-						alignItems: "center", backgroundColor: "white" }}>
-					<h1 style={{ fontSize: "large", fontStyle: "italic", margin: 0 }}>Osakanagram</h1>
-				</header>
-				<div style={{ width: "500px", margin: "65px auto" }}>
-					{photos.map(a => <Photo {...a}/>)}
-				</div>
+      <div>
+        <header style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "40px",
+            borderBottom: "1px solid silver", boxSizing: "border-box", display: "flex",
+            alignItems: "center", backgroundColor: "white" }}>
+          <h1 style={{ fontSize: "large", fontStyle: "italic", margin: 0 }}>Osakanagram</h1>
+        </header>
+        <div style={{ width: "500px", margin: "65px auto" }}>
+          {photos.map(a => <Photo {...a}/>)}
+        </div>
       </div>
     );
   }
