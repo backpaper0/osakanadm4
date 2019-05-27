@@ -214,18 +214,27 @@ type alias FavModel =
     { count : Int }
 ```
 
+- [レコード](https://elm-lang.org/docs/records)
+
 次は`msg`です。
 
 `msg`はイベントのようなものです。
 このアプリケーションが発火させるイベントは星マークを押したときのものです。
+
+`msg`はカスタム型として定義します。
 
 ```elm
 type FavMsg
     = ClickStar
 ```
 
-`init`、`view`、`update`もちょろっと変更しましょう。
+カスタム型はTypeScriptでいうUnion型みたいなやつです。
+Scalaだと`sealed`と`case class`を組み合わせたものっぽいですね。
+あとは直和型とかバリアントって呼ばれてるやつっぽいやつです。
 
+- [カスタム型](https://guide.elm-lang.org/types/custom_types.html)
+
+`init`、`view`、`update`もちょろっと変更しましょう。
 
 ```elm
 init =
@@ -289,7 +298,110 @@ view { count } =
             ]
 ```
 
+引数はパターンマッチでレコードを分解して受け取れます。
+これはJavaScriptでも似たようなことができますね。
+
 ## 星をクリックして「いいね！」の件数を増やすやつを追加してみよう
+
+クリックイベントを使うために次の`import`を追加してください。
+
+```elm
+import Html.Events exposing (..)
+```
+
+星ボタンの属性リストに`onClick`を追加します。
+
+今、星ボタンの属性リストには変数`css`が設定されています。
+この変数`css`にイベントハンドラを追加しても良いんですが、`css`って名前にしたのでこのまま置いておきます。
+
+ここでは新しく`handler`という変数を導入して、`css`と合わせて`attrs`という変数にしちゃいましょう。
+星ボタンに渡している`css`を`attrs`に変えてください。
+
+```elm
+view : FavModel -> Html FavMsg
+view { count } =
+    let
+        css =
+            [ style "cursor" "pointer"
+            , style "border" "0"
+            , style "background-color" "transparent"
+            , style "font-size" "large"
+            , style "color" "gray"
+            ]
+
+        handler =
+            onClick ClickStar
+
+        attrs =
+            handler :: css
+    in
+        div []
+            [ button attrs [ text "☆" ]
+            , span [] [ text "いいね！", text <| String.fromInt count, text "件" ]
+            ]
+```
+
+[onClick](https://package.elm-lang.org/packages/elm/html/latest/Html-Events#onClick)は`msg`を受け取って`Attribute msg`を返す関数です。
+`msg`は仮型引数です。
+
+ここでは実型引数が`FavMsg`です。
+星ボタンをクリックしたことを表すのは`ClickStar`なので、`onClick`関数には`ClickStar`を渡しています。
+
+イベントのハンドリングは`update`関数で行います。
+今回は`ClickStar`イベントを受け取って`model`の`count`に1足しましょう。
+
+```elm
+update : FavMsg -> FavModel -> FavModel
+update msg model =
+    case msg of
+        ClickStar ->
+            { model | count = model.count + 1 }
+```
+
+`case of`でカスタム型のパターンマッチができます。
+
+それから新しい`model`を構築しているところに注目してください。
+
+```elm
+{ model | count = model.count + 1 }
+```
+
+これは`model`をベースにして`count`だけを変更しています。
+今は`count`しかないので便利さを実感できませんが、もっとたくさんの値を持つアプリケーションを作るときは便利です。
+
+## HTTPリクエストを行う
+
+HTTPリクエストを行うには`Browser.sandbox`ではなくて[Browser.element](https://package.elm-lang.org/packages/elm/browser/latest/Browser#element)を使う必要があります。
+
+定義を見てみましょう。
+
+```
+element :
+    { init : flags -> ( model, Cmd msg )
+    , view : model -> Html msg
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    }
+    -> Program flags model msg
+```
+
+`sandbox`と比べると……
+
+`init`は型引数`flags`を取るようになっています。
+また、戻り値は`model`ではなく`model`と`Cmd msg`のタプルです。
+
+`view`は変わりなしですね。
+
+`update`は戻り値が`model`と`Cmd msg`のタプルになっています。
+
+それから新しく`subscriptions`という関数を取るようになっています。
+
+新しい要素がいくつか出てきましたね。
+
+- `flags`
+- `Cmd msg`
+- `subscriptions`
+- `Sub msg`
 
 WIP
 
