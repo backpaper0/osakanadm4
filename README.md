@@ -403,7 +403,111 @@ element :
 - `subscriptions`
 - `Sub msg`
 
-WIP
+`flags`はJavaScriptの世界からこんにちはできる初期値です。
+ElmコードをJavaScriptへビルドしてHTMLファイルから読み込んで使おうとすると次のようなコードになります。
+
+```html
+<div id="root"></div>
+<script>
+  const node = document.getElementById("root");
+  const app = Elm.Main.init({ node });
+</script>
+```
+
+この`init`関数に`flags`を渡せるのです。
+
+```html
+<div id="root"></div>
+<script>
+  const node = document.getElementById("root");
+  const flags = "Hello, world!";
+  const app = Elm.Main.init({ node, flags });
+</script>
+```
+
+ちなみにElmコードをJavaScriptへビルドするには次のコマンドで行います。
+
+```sh
+elm make src/Main.elm --output main.js
+```
+
+`Cmd msg`は非同期処理や副作用を伴う処理に使われるやつです。
+非同期でアレした結果や副作用をアレした結果を`msg`にしてアレすると`update`が呼ばれます。
+
+`subscriptions`と`Sub msg`は今日は使わないし解説面倒なので省略します。
+まあ、それを言うと`flags`も使わないんですけどね、でも解説しちゃいましたね。
+`subscriptions`と`Sub msg`は以前[ライフゲームを作った時に使った](https://github.com/backpaper0/elm-sandbox/blob/2371825cdf35c8ad0ae519345c999177f0979870/sandbox/src/LifeGame.elm#L187-L189)ので参考にしてみてください。
+
+それはそうとHTTPリクエストしてみましょう。
+`control + c`で`reactor`を止めて`elm install elm/http`してから、また`reactor`を起動しましょう。
+
+次の内容で`hello.json`を作ってください。
+
+```json
+{"message":"Hello, world!"}
+```
+
+[http://localhost:8000/hello.json](http://localhost:8000/hello.json)でHTTP使ってアクセスできます。
+このファイルをHTTPで取ってくるコードを書いてみましょう。
+
+- [Http.get](https://package.elm-lang.org/packages/elm/http/latest/Http#get)
+- [Http.expectString](https://package.elm-lang.org/packages/elm/http/latest/Http#expectString)
+
+```elm
+module HttpDemo exposing (..)
+
+import Browser
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Http
+
+
+type alias DemoModel =
+    { message : String }
+
+
+type DemoMsg
+    = GetHello
+    | GotHello (Result Http.Error String)
+
+
+init : () -> ( DemoModel, Cmd DemoMsg )
+init () =
+    ( DemoModel "-", Cmd.none )
+
+
+view : DemoModel -> Html DemoMsg
+view { message } =
+    div []
+        [ p [] [ text message ]
+        , p []
+            [ button [ onClick GetHello ] [ text "Click me !" ]
+            ]
+        ]
+
+
+update : DemoMsg -> DemoModel -> ( DemoModel, Cmd DemoMsg )
+update msg model =
+    case msg of
+        GetHello ->
+            ( model, Http.get { url = "/hello.json", expect = Http.expectString GotHello } )
+
+        GotHello (Ok message) ->
+            ( { model | message = message }, Cmd.none )
+
+        GotHello (Err _) ->
+            ( model, Cmd.none )
+
+
+subscriptions : DemoModel -> Sub DemoMsg
+subscriptions model =
+    Sub.none
+
+
+main =
+    Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
+```
 
 ## APIを呼び出す
 
