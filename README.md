@@ -76,7 +76,7 @@ main =
 
 変数の本体は`h1`関数の戻り値です。
 
-`h1`関数はHTMLの`h1`要素を表す関数で、引数を2つ取ります。
+`h1`はHTMLの`h1`要素を表す関数で、引数を2つ取ります。
 1つは属性のリスト、もう1つは中身のリストです。
 
 属性のリストは`[]`、つまり空っぽです。
@@ -345,9 +345,9 @@ view { count } =
 `msg`は仮型引数です。
 
 ここでは実型引数が`FavMsg`です。
-星ボタンをクリックしたことを表すのは`ClickStar`なので、`onClick`関数には`ClickStar`を渡しています。
+星ボタンをクリックしたことを表すのは`ClickStar`なので、`onClick`には`ClickStar`を渡しています。
 
-イベントのハンドリングは`update`関数で行います。
+イベントのハンドリングは`update`で行います。
 今回は`ClickStar`イベントを受け取って`model`の`count`に1足しましょう。
 
 ```elm
@@ -414,7 +414,7 @@ ElmコードをJavaScriptへビルドしてHTMLファイルから読み込んで
 </script>
 ```
 
-この`init`関数に`flags`を渡せるのです。
+この`init`に`flags`を渡せるのです。
 
 ```html
 <div id="root"></div>
@@ -450,8 +450,9 @@ elm make src/Main.elm --output main.js
 [http://localhost:8000/hello.json](http://localhost:8000/hello.json)でHTTP使ってアクセスできます。
 このファイルをHTTPで取ってくるコードを書いてみましょう。
 
-- [Http.get](https://package.elm-lang.org/packages/elm/http/latest/Http#get)
-- [Http.expectString](https://package.elm-lang.org/packages/elm/http/latest/Http#expectString)
+まずは元となる画面を準備します。
+単にメッセージとボタンが表示されているだけのものです。
+`Browser.element`を使用していることに注目してください。
 
 ```elm
 module HttpDemo exposing (..)
@@ -460,34 +461,103 @@ import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Http
 
 
-type alias DemoModel =
+type alias Model =
     { message : String }
 
 
-type DemoMsg
-    = GetHello
-    | GotHello (Result Http.Error String)
+type Msg
+    = Noop
 
 
-init : () -> ( DemoModel, Cmd DemoMsg )
+init : () -> ( Model, Cmd Msg )
 init () =
-    ( DemoModel "-", Cmd.none )
+    ( Model "Initial message", Cmd.none )
 
 
-view : DemoModel -> Html DemoMsg
+view : Model -> Html Msg
 view { message } =
     div []
         [ p [] [ text message ]
         , p []
-            [ button [ onClick GetHello ] [ text "Click me !" ]
+            [ button [] [ text "Click me !" ]
             ]
         ]
 
 
-update : DemoMsg -> DemoModel -> ( DemoModel, Cmd DemoMsg )
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+main =
+    Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
+```
+
+ここにHTTPリクエストの処理を足していきます。
+
+まず`import`してください。
+
+```elm
+import Http
+```
+
+次に`onClick`で`msg`を発行させます。
+
+`Msg`に`GetHello`を追加して`onClick`で発行するようにしてください。
+
+次に`update`で`GetHello`をハンドリングします。
+
+```elm
+update msg model =
+    case msg of
+        GetHello ->
+            ( model, Http.get { url = "/hello.json", expect = Http.expectString GotHello } )
+```
+
+[Http.get](https://package.elm-lang.org/packages/elm/http/latest/Http#get)は`Cmd msg`を返します。
+
+`url`と`expect`を指定します。
+`expect`は期待するレスポンスの形を指定するところです。
+今回は`String`を期待しています。
+
+[Http.expectString](https://package.elm-lang.org/packages/elm/http/latest/Http#expectString)の定義をみてみましょう。
+
+```
+expectString : (Result Error String -> msg) -> Expect msg
+```
+
+`Result Error String`を受け取って`msg`を返す関数を受け取って`Expect msg`を返すようになっています（この`Error`は`Http.Error`です）。
+
+[Result error value](https://package.elm-lang.org/packages/elm/core/latest/Result)は他の言語では`Either`と呼ばれるものに似ています。
+
+`Result Error String`を受け取る`GotHello`を定義しましょう。
+
+```elm
+type Msg
+    = GetHello
+    | GotHello (Result Http.Error String)
+```
+
+それにしても`onClick`で`msg`投げたと思ったらまた`GotHello`を投げるんかい、と思ったかもしれません。
+
+ここまでの処理の流れは次の通りです。
+
+1. `onClick`で`GetHello`を発行する
+2. `update`で`GetHello`を受け取ってHTTPリクエストを行う
+3. レスポンスが返ってきたらボディを`String`の値にして`GotHello`を発行する
+4. `update`で`GotHello`を受け取って`model`を更新する
+
+「ここまでの処理の流れ」と言ったけど最後のやつはまだ書いていませんでしたね。
+というわけで`GotHello`をハンドリングしましょう。
+
+```elm
 update msg model =
     case msg of
         GetHello ->
@@ -498,16 +568,66 @@ update msg model =
 
         GotHello (Err _) ->
             ( model, Cmd.none )
-
-
-subscriptions : DemoModel -> Sub DemoMsg
-subscriptions model =
-    Sub.none
-
-
-main =
-    Browser.element { init = init, view = view, update = update, subscriptions = subscriptions }
 ```
+
+`Err`の時はエラー処理を書くべきですが、今回は省略します。
+
+## JSONデコードする
+
+HTTPで取得したやつはJSONです。
+今はそのまま表示していますが、せっかくなのでデコードしましょう。
+
+`reactor`を止めて`elm install elm/json`しましょう。
+
+JSONを受け取る場合は`Http.get`の`expect`に`Http.expectString`ではなく[Http.expectJson](https://package.elm-lang.org/packages/elm/http/latest/Http#expectJson)を使います。
+
+`Http.expectJson`の定義をみてみましょう。
+
+```
+expectJson : (Result Error a -> msg) -> Decoder a -> Expect msg
+```
+
+`Result Http.Error a`を受け取って`msg`を返す関数と`Decoder a`を受け取って`Expect msg`を返す関数ですね。
+
+`a`は仮型変数です。
+JSONをデコードして求められる任意の型ですね。
+
+今回は`message`のみを持つレコードを定義してそれを使いましょう。
+
+```elm
+type alias Hello =
+    { message : String }
+```
+
+次はデコーダーを定義します。
+まず`import`してください。
+
+```elm
+import Json.Decode as D
+```
+
+`Json.Decode`は頻出するので`D`という別名を付けています。
+いやいや`D`て！と思ったら他の名前でも構いません。
+
+`message`というフィールドを取り出すので[Json.Decode.field](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode#field)を使います。
+`Json.Decode.field`は`String`と`Decoder a`を受け取って`Decoder a`を返す関数です。
+受け取る`String`はフィールド名、`Decoder a`はフィールドの型です。
+
+`message`フィールドは`String`なので[Json.Decode.string](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode#string)を使います。
+
+最後に`Decoder string`を`Decoder Hello`に変換するため[Json.Decode.map](https://package.elm-lang.org/packages/elm/json/latest/Json-Decode#map)を使います。
+
+というわけで`Decoder Hello`は次のように定義できます。
+
+```elm
+update msg model =
+    let
+        decoder =
+            D.map Hello (D.field "message" D.string)
+    in
+```
+
+`decoder`は`update`の中でしか使わないので`let in`を使用しています。
 
 ## APIを呼び出す
 
