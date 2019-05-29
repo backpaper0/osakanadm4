@@ -810,6 +810,8 @@ update msg model =
 これだけ知ったなら**Osakanagram**を作れるはずです。
 
 Osakanagramの参照実装をReactで作ってみました。
+このリポジトリ自体がOsakanagramの参照実装です。
+
 同じものをElmを使って実装してみましょう。
 
 ## Osakanagram参照実装を起動する
