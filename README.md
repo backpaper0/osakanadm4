@@ -23,7 +23,7 @@ reactorを起動しましょう。
 elm reactor
 ```
 
-http://localhost:8000/ へアクセスしてください。
+[http://localhost:8000/](http://localhost:8000/) へアクセスしてください。
 
 なんかそれっぽい画面が表示されたらOKです。
 
@@ -74,7 +74,7 @@ main =
 
 `main`という名前の変数を定義しています。
 
-変数の本体は`h1`関数の戻り値です。
+変数の本体は[h1](https://package.elm-lang.org/packages/elm/html/latest/Html#h1)の戻り値です。
 
 `h1`はHTMLの`h1`要素を表す関数で、引数を2つ取ります。
 1つは属性のリスト、もう1つは中身のリストです。
@@ -94,10 +94,179 @@ main =
 ```
 
 ブラウザをリロードすると文字が青くなったはずです。
+[style](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes#style)はCSSが書ける関数です。
 
-- [Elm言語の解説](https://guide.elm-lang.org/core_language.html)
-- [Html.h1のAPIドキュメント](https://package.elm-lang.org/packages/elm/html/latest/Html#h1)
-- [Html.Attributes.styleのAPIドキュメント](https://package.elm-lang.org/packages/elm/html/latest/Html-Attributes#style)
+## Elmの関数を少し学ぶ
+
+Elmを学ぶには次のドキュメントが役立ちます。
+今日も別タブで開いておいてください。
+
+- [Official Guide](https://guide.elm-lang.org/)
+- [Elm Syntax](https://elm-lang.org/docs/syntax)
+- [Package Docs](https://package.elm-lang.org/)
+
+ここではElmの関数を少し学びましょう。
+
+新しく`src/FunctionDemo.elm`を作成して次のコードをコピペしてください。
+
+```elm
+module FunctionDemo exposing (..)
+
+import Html exposing (..)
+import Html.Attributes exposing (..)
+
+
+foods =
+    [ "Apple", "Banana", "Chocolate", "Donut", "Eggs Benedict" ]
+
+
+elements =
+    [ li [] [ text "Apple" ]
+    , li [] [ text "Banana" ]
+    , li [] [ text "Chocolate" ]
+    , li [] [ text "Donut" ]
+    , li [] [ text "Eggs Benedict" ]
+    ]
+
+
+main =
+    ul [] elements
+```
+
+まずは`foods`を`elements`へ変換してみましょう。
+
+ヒント：[List.map](https://package.elm-lang.org/packages/elm/core/latest/List#map)と[List.singleton](https://package.elm-lang.org/packages/elm/core/latest/List#singleton)を使います。
+
+答えが見えたらアレなので行数を稼いでおきます。
+
+```
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!!
+```
+
+答え：こんな感じです。
+
+```elm
+texts =
+    List.map text foods
+
+
+nodes =
+    List.map List.singleton texts
+
+
+elements =
+    List.map (li []) nodes
+```
+
+これを一行で書くと次のようになります。
+
+```elm
+elements =
+    List.map (li []) (List.map List.singleton (List.map text foods))
+```
+
+ちょっと見辛いですね。
+
+ここで2つの関数`A -> B`と`B -> C`があるとします。
+Elmではこの2つの関数を合成して`A -> C`にできます。
+
+関数合成は`>>`を使います。
+
+```elm
+elements =
+    List.map (text >> List.singleton >> li []) foods
+```
+
+さて、次は名前に`"e"`を含む要素だけに絞り込んでから`li`要素を組み立ててみましょう。
+
+ヒント：[List.filter](https://package.elm-lang.org/packages/elm/core/latest/List#filter)と[String.contains](https://package.elm-lang.org/packages/elm/core/latest/String#contains)を使います。
+
+また答えが見えたらアレなので行数を稼いでおきます。
+
+```
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+(´・ω・｀)
+(´・ω・)
+(´・ω)
+(   ´・)
+(     ´)
+（      ）
+（｀     ）
+（・｀   ）
+（ω・｀）
+（・ω・｀）
+ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!!
+```
+
+答え：こんな感じです。
+
+```elm
+elements =
+    List.map (text >> List.singleton >> li []) (List.filter (String.contains "e") foods)
+```
+
+処理の順番は`filter`してから`map`するのにコード上では`map`が`filter`よりも先に来ていますね。
+
+これは`|>`を使うことで処理の順番通りに書けるようになります。
+
+```elm
+elements =
+    foods |> List.filter (String.contains "e") |> List.map (text >> List.singleton >> (li []))
+```
+
+これでみなさんは`filter`と`map`、`>>`と`|>`を知りました。
+いい感じです。
+
+あとは必要になったら調べながら進みましょう。
 
 ## Browser.sandoxを使ってみよう
 
@@ -205,7 +374,7 @@ type alias FavModel =
     Int
 ```
 
-あまり単一の値だけで済むアプリケーションは見たことないですね。
+単一の値だけで済むアプリケーションはあまり見たことないですね。
 
 というわけでレコードを使いましょう。
 
@@ -629,19 +798,44 @@ update msg model =
 
 `decoder`は`update`の中でしか使わないので`let in`を使用しています。
 
-## APIを呼び出す
+## Osakanagramを作る
 
-APIを起動する。
+ここまでで次のような知識を得ました。
+
+- レコード、カスタム型、パターンマッチ
+- `Browser.element`、`init`、`view`、`update`、`subscriptions`
+- `Http`
+- `Json.Decode`
+
+これだけ知ったなら**Osakanagram**を作れるはずです。
+
+Osakanagramの参照実装をReactで作ってみました。
+同じものをElmを使って実装してみましょう。
+
+## Osakanagram参照実装を起動する
+
+まずAPIを起動しましょう。
+Dockerイメージを用意しています。
+あと`docker-compose.yml`も用意しているので起動は楽ちんです。
 
 ```sh
 docker-compose up -d
 ```
 
-Reactで作ったデモを動かす。
+参照実装を起動しましょう。
 
 ```
 yarn install
 yarn start
 ```
 
-WIP
+[http://localhost:3000/](http://localhost:3000/)にアクセスしてみてください。
+Osakanagramが表示されましたね。
+
+星マークをクリックしてみてください。
+「いいね！」の件数が増えますよね。
+無限に増やせます。
+嘘です。
+オーバーフローするまでは増やせます。
+
+それではコードを書きましょう。
