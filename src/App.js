@@ -1,43 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-class Photo extends React.Component {
-
-  constructor(props) {
-    super(props);
-    const { fav } = this.props;
-    this.state = {
-      fav
-    };
-  }
-
-  render() {
-    const { title, image } = this.props;
-    const { fav } = this.state;
-    return (
-      <div style={{ border: "1px solid silver", margin: "25px 0" }}>
-        <div>
-          <img style={{ width: "100%" }} src={`http://localhost:8080${image}`}/>
-        </div>
-        <div style={{ padding: "0 5px" }}>{title}</div>
-        <div style={{ padding: "0 5px" }}>
-          <button style={{ cursor: "pointer", border: 0, fontSize: "large",
-              backgroundColor: "transparent", color: fav === 0 ? "gray" : "PaleVioletRed" }}
-            onClick={this.addFav.bind(this)}>{fav === 0 ? "☆" : "★" }</button>
-          <span>
-            いいね！
-            <span>{fav}</span>
-            件
-          </span>
-        </div>
+const Photo = (props) => {
+  const [fav, setFav] = useState(props.fav);
+  const { image, title } = props;
+  const addFav = () => setFav(fav => fav + 1);
+  return (
+    <div style={{ border: "1px solid silver", margin: "25px 0" }}>
+      <div>
+        <img style={{ width: "100%" }} src={`http://localhost:8080${image}`}/>
       </div>
-    );
-  }
-
-  addFav() {
-    const { fav } = this.state;
-    this.setState({ fav: fav + 1 });
-  }
-}
+      <div style={{ padding: "0 5px" }}>{title}</div>
+      <div style={{ padding: "0 5px" }}>
+        <button style={{ cursor: "pointer", border: 0, fontSize: "large",
+            backgroundColor: "transparent", color: fav === 0 ? "gray" : "PaleVioletRed" }}
+          onClick={addFav}>{fav === 0 ? "☆" : "★" }</button>
+        <span>
+          いいね！
+          <span>{fav}</span>
+          件
+        </span>
+      </div>
+    </div>
+  );
+};
 
 class App extends React.Component {
   
